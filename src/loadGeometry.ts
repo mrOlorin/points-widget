@@ -1,15 +1,11 @@
-import {BufferGeometry, Matrix4, ShapeGeometry, Vector3} from 'three';
+import {BufferGeometry, Font, Matrix4, ShapeGeometry, TextGeometry, Vector3} from 'three';
 import {SVGLoader} from 'three/examples/jsm/loaders/SVGLoader';
 import {BufferGeometryUtils} from 'three/examples/jsm/utils/BufferGeometryUtils';
+import * as fontJSONData from 'three/examples/fonts/droid/droid_sans_regular.typeface.json';
 
-const loadGeometry = async (resourceUrl: string): Promise<BufferGeometry> => {
-    return loadSVG(resourceUrl);
-}
-
-const loadSVG = async (resourceUrl: string): Promise<BufferGeometry> => {
+const loadSVG = async (svgText: string): Promise<BufferGeometry> => {
     const loader = new SVGLoader();
-    loader.setCrossOrigin('anonymous');
-    const data = await loader.loadAsync(resourceUrl);
+    const data = loader.parse(svgText);
     const paths = data.paths;
     const geometries: Array<ShapeGeometry> = [];
 
@@ -29,6 +25,14 @@ const loadSVG = async (resourceUrl: string): Promise<BufferGeometry> => {
 
     normalize(geometry);
     return geometry.toNonIndexed();
+}
+
+const loadText = async (text: string): Promise<BufferGeometry> => {
+    const geometry = new TextGeometry(text, {
+        font: new Font(fontJSONData),
+    })
+    normalize(geometry);
+    return geometry;
 }
 
 const normalize = (geometry: BufferGeometry) => {
@@ -60,4 +64,4 @@ const normalize = (geometry: BufferGeometry) => {
     geometry.translate(translate.x, translate.y, translate.z);
 }
 
-export {loadGeometry, loadSVG};
+export {loadSVG, loadText};

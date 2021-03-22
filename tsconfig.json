@@ -5,6 +5,7 @@
     "noImplicitAny": true,
     "module": "es2020",
     "moduleResolution": "Node",
+    "resolveJsonModule": true,
     "target": "es6",
     "allowJs": false,
     "jsx": "preserve",

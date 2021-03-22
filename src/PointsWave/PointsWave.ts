@@ -21,7 +21,10 @@ interface PointsWaveOptions {
     speed: number;
     randomColor: boolean;
     pointColor: Color;
-    geometry?: Promise<BufferGeometry>;
+    shape: {
+        geometry: BufferGeometry | Promise<BufferGeometry>;
+        options: {}
+    };
 }
 
 export const defaultOptions: PointsWaveOptions = {
@@ -32,6 +35,10 @@ export const defaultOptions: PointsWaveOptions = {
     speed: 1,
     randomColor: true,
     pointColor: new Color(255, 80, 0),
+    shape: {
+        geometry: undefined,
+        options: {},
+    }
 }
 
 export default class PointsWave {
@@ -51,6 +58,9 @@ export default class PointsWave {
             this.setSizes(this.points.geometry);
             this.setColors(this.points.geometry);
         }],
+        ['shape', async () => {
+            this.setPositions(this.points.geometry, await this.options.shape.geometry)
+        }],
     ]);
 
     public constructor(options: PointsWaveOptions = defaultOptions) {
@@ -61,7 +71,6 @@ export default class PointsWave {
     }
 
     public resetOptions() {
-        console.log(this.options.pointSize, this.initialOptions.pointSize);
         Object.assign(this.options, this.initialOptions);
     }
 
@@ -90,35 +99,8 @@ export default class PointsWave {
         this.cyclesLeft = 0;
     }
 
-    private initOptionsProxy(options: PointsWaveOptions): PointsWaveOptions {
-        options.pointColor = new Proxy(options.pointColor, {
-            get: (target: Color, prop: keyof Color, receiver) => {
-                return Reflect.get(target, prop, receiver);
-            },
-            set: (target: Color, prop: keyof Color, receiver) => {
-                const result = Reflect.set(target, prop, receiver);
-                if (!options.randomColor) {
-                    this.onOptionChanges.get('pointColor')();
-                }
-                return result;
-            },
-        });
-        return new Proxy(options, {
-            get: (target: PointsWaveOptions, prop: keyof PointsWaveOptions, receiver) => {
-                return Reflect.get(target, prop, receiver);
-            },
-            set: (target: PointsWaveOptions, prop: keyof PointsWaveOptions, receiver) => {
-                const result = Reflect.set(target, prop, receiver);
-                if (this.onOptionChanges.has(prop)) {
-                    this.onOptionChanges.get(prop)();
-                }
-                return result;
-            },
-        });
-    }
-
     private async buildPoints(): Promise<void> {
-        this.points.geometry = await this.initGeometry(await this.options.geometry);
+        this.points.geometry = await this.initGeometry(await this.options.shape.geometry);
         this.points.material = this.initMaterial() as ShaderMaterial;
         this.points.onBeforeRender = () => {
             (this.points.material as ShaderMaterial).uniforms.uTime.value = performance.now() * .001;
@@ -163,8 +145,8 @@ export default class PointsWave {
             const offset = i * 3;
             const point = getPoint();
             positions[offset] = point[0];
-            positions[offset+1] = point[1];
-            positions[offset+2] = point[2];
+            positions[offset + 1] = point[1];
+            positions[offset + 2] = point[2];
         }
 
         geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
@@ -205,6 +187,21 @@ export default class PointsWave {
             depthTest: true,
             transparent: true,
             vertexColors: true
+        });
+    }
+
+    private initOptionsProxy(options: PointsWaveOptions): PointsWaveOptions {
+        return new Proxy(options, {
+            get: (target: PointsWaveOptions, prop: keyof PointsWaveOptions, receiver) => {
+                return Reflect.get(target, prop, receiver);
+            },
+            set: (target: PointsWaveOptions, prop: keyof PointsWaveOptions, receiver) => {
+                const result = Reflect.set(target, prop, receiver);
+                if (this.onOptionChanges.has(prop)) {
+                    this.onOptionChanges.get(prop)();
+                }
+                return result;
+            },
         });
     }
 

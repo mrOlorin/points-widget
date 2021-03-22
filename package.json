@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "build": "webpack",
-    "dev": "webpack serve"
+    "dev": "webpack serve",
+    "gh-page": "git subtree push --prefix dist origin gh-pages"
   },
   "keywords": [],
   "author": "mr.olorin",
