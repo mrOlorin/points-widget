@@ -6,7 +6,7 @@ import {ParametricGeometries} from 'three/examples/jsm/geometries/ParametricGeom
 import {InputParams} from "tweakpane/lib/api/types";
 
 interface GeometryOption {
-    text: string;
+    name: string;
     build: (options?: any) => BufferGeometry | Promise<BufferGeometry>;
     options?: {
         value: { [paramName: string]: any };
@@ -16,27 +16,11 @@ interface GeometryOption {
 
 const geometries: Array<GeometryOption> = [
     {
-        text: 'Не определена',
+        name: 'Не определена',
         build: () => null,
     },
     {
-        text: 'Текст',
-        build: (params) => {
-            return loadText(params.text);
-        },
-        options: {
-            value: {
-                text: "Wazzuuup",
-            },
-            params: {
-                text: {
-                    label: 'Текст',
-                },
-            },
-        },
-    },
-    {
-        text: 'Згрузить SVG',
+        name: '📁 SVG',
         build: async () => {
             return new Promise<BufferGeometry>(resolve => {
                 const fileInput = document.createElement('input') as HTMLInputElement;
@@ -53,7 +37,23 @@ const geometries: Array<GeometryOption> = [
         },
     },
     {
-        text: 'Куб',
+        name: 'Текст',
+        build: (params) => {
+            return loadText(params.text);
+        },
+        options: {
+            value: {
+                text: "Wazzuuup",
+            },
+            params: {
+                text: {
+                    label: 'Текст',
+                },
+            },
+        },
+    },
+    {
+        name: 'Куб',
         build: (params) => new BoxGeometry(params.width, params.height, params.depth),
         options: {
             value: {
@@ -81,7 +81,7 @@ const geometries: Array<GeometryOption> = [
         },
     },
     {
-        text: 'Диск',
+        name: 'Диск',
         build: (params) => new CircleGeometry(params.radius, params.height),
         options: {
             value: {
@@ -104,7 +104,7 @@ const geometries: Array<GeometryOption> = [
         },
     },
     {
-        text: 'Конус',
+        name: 'Конус',
         build: (params) => new ConeGeometry(params.radius, params.height),
         options: {
             value: {
@@ -126,7 +126,7 @@ const geometries: Array<GeometryOption> = [
         },
     },
     {
-        text: 'Цилиндр',
+        name: 'Цилиндр',
         build: (params) => new CylinderGeometry(params.radiusTop, params.radiusBottom, params.height, 64, 64),
         options: {
             value: {
@@ -154,7 +154,7 @@ const geometries: Array<GeometryOption> = [
         }
     },
     {
-        text: 'Бутылка Клейна',
+        name: 'Бутылка Клейна',
         build: (params) => new ParametricGeometry(ParametricGeometries.klein, params.slices, params.stacks)
             .scale(params.scale, params.scale, params.scale)
             .rotateX(-90),

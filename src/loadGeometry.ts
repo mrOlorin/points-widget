@@ -37,29 +37,30 @@ const loadText = async (text: string): Promise<BufferGeometry> => {
 
 const normalize = (geometry: BufferGeometry) => {
     geometry.computeBoundingBox();
-    const size = Math.max(geometry.boundingBox.max.x - geometry.boundingBox.min.x, geometry.boundingBox.max.y - geometry.boundingBox.min.y);
+    const bb = geometry.boundingBox;
+    const size = Math.max(bb.max.x - bb.min.x, bb.max.y - bb.min.y);
     const scale = 1 / size;
     geometry.scale(scale, scale, scale);
     geometry.computeBoundingBox();
 
     const translate = new Vector3();
-    if (geometry.boundingBox.min.x >= 0) {
-        translate.x = -geometry.boundingBox.min.x - geometry.boundingBox.max.x * .5;
+    if (bb.min.x >= 0) {
+        translate.x = -bb.min.x - bb.max.x * .5;
     }
-    if (geometry.boundingBox.max.x <= 0) {
-        translate.x = -geometry.boundingBox.max.x - geometry.boundingBox.min.x * .5;
+    if (bb.max.x <= 0) {
+        translate.x = -bb.max.x - bb.min.x * .5;
     }
-    if (geometry.boundingBox.min.y >= 0) {
-        translate.y = -geometry.boundingBox.min.y - geometry.boundingBox.max.y * .5;
+    if (bb.min.y >= 0) {
+        translate.y = -bb.min.y - bb.max.y * .5;
     }
-    if (geometry.boundingBox.max.y <= 0) {
-        translate.y = -geometry.boundingBox.max.y - geometry.boundingBox.min.y * .5;
+    if (bb.max.y <= 0) {
+        translate.y = -bb.max.y - bb.min.y * .5;
     }
-    if (geometry.boundingBox.min.z >= 0) {
-        translate.z = -geometry.boundingBox.min.z - geometry.boundingBox.max.z * .5;
+    if (bb.min.z >= 0) {
+        translate.z = -bb.min.z - bb.max.z * .5;
     }
-    if (geometry.boundingBox.max.z <= 0) {
-        translate.z = -geometry.boundingBox.max.z - geometry.boundingBox.min.z * .5;
+    if (bb.max.z <= 0) {
+        translate.z = -bb.max.z - bb.min.z * .5;
     }
     geometry.translate(translate.x, translate.y, translate.z);
 }

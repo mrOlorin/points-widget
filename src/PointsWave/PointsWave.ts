@@ -12,109 +12,97 @@ import {
 import vertexShader from './pointsVert.glsl';
 import fragmentShader from './pointsFrag.glsl';
 import {MeshSurfaceSampler} from 'three/examples/jsm/math/MeshSurfaceSampler';
+import {IUniform} from "three/src/renderers/shaders/UniformsLib";
 
-interface PointsWaveOptions {
+export interface PointsWaveSettings {
+    id: string;
+    name: string;
     pointSize: number;
     pointsNumber: number;
-    wobbliness: number;
     intensity: number;
     speed: number;
     randomColor: boolean;
     pointColor: Color;
     shape: {
-        geometry: BufferGeometry | Promise<BufferGeometry>;
-        options: {}
+        geometry: BufferGeometry;
+        settings: {}
     };
 }
 
-export const defaultOptions: PointsWaveOptions = {
+export const defaultSettings: PointsWaveSettings = {
+    id: '1',
+    name: 'Дефолт',
     pointSize: 10,
     pointsNumber: 10000,
-    wobbliness: 1,
     intensity: 1,
     speed: 1,
     randomColor: true,
     pointColor: new Color(255, 80, 0),
     shape: {
         geometry: undefined,
-        options: {},
+        settings: {},
     }
 }
 
 export default class PointsWave {
     public readonly scene: Scene = new Scene();
     private readonly points: Points = new Points();
-    public readonly options: PointsWaveOptions;
-    private readonly initialOptions: PointsWaveOptions;
     public phase: number = 0;
-    public cyclesLeft: number = 0;
+    public stepsLeft: number = 0;
 
-    private onOptionChanges: Map<keyof PointsWaveOptions, () => void> = new Map([
-        ['pointSize', () => this.setSizes(this.points.geometry)],
-        ['pointColor', () => this.setColors(this.points.geometry)],
-        ['randomColor', () => this.setColors(this.points.geometry)],
-        ['pointsNumber', () => {
-            this.setPositions(this.points.geometry);
-            this.setSizes(this.points.geometry);
-            this.setColors(this.points.geometry);
-        }],
-        ['shape', async () => {
-            this.setPositions(this.points.geometry, await this.options.shape.geometry)
-        }],
-    ]);
-
-    public constructor(options: PointsWaveOptions = defaultOptions) {
-        this.initialOptions = Object.create(options);
-        this.options = this.initOptionsProxy(options);
-        this.buildPoints();
+    public constructor(private _settings: PointsWaveSettings = defaultSettings) {
+        this.settings = _settings;
         this.scene.add(this.points);
     }
 
-    public resetOptions() {
-        Object.assign(this.options, this.initialOptions);
+    public get settings() {
+        return this._settings;
+    }
+
+    public set settings(settings: PointsWaveSettings) {
+        this._settings = this.initSettingsProxy(settings);
+        this.buildPoints();
     }
 
     public async run(times: number = 1) {
+        let range = [0, 2 * Math.PI];
+        let speedScale = .02;
         return new Promise<void>((resolve) => {
-            this.cyclesLeft += times;
+            this.stepsLeft += times;
             const animate = () => {
-                if (this.phase >= 2 * Math.PI) {
-                    this.phase = 0;
-                    this.cyclesLeft--;
+                if (this.phase >= range[1]) {
+                    this.phase = range[0];
+                    this.stepsLeft--;
                 }
-                if (this.cyclesLeft > 0) {
-                    this.phase += this.options.speed * .02;
+                if (this.stepsLeft > range[0]) {
+                    this.phase += this.settings.speed * speedScale;
                     requestAnimationFrame(animate);
                 } else {
                     return resolve();
                 }
             }
-            if (this.cyclesLeft === times) {
+            if (this.stepsLeft === times) {
                 animate();
             }
         });
     };
 
     public stop() {
-        this.cyclesLeft = 0;
+        this.stepsLeft = 0;
     }
 
     private async buildPoints(): Promise<void> {
-        this.points.geometry = await this.initGeometry(await this.options.shape.geometry);
+        this.points.geometry = this.initGeometry(this.settings.shape.geometry);
         this.points.material = this.initMaterial() as ShaderMaterial;
         this.points.onBeforeRender = () => {
-            (this.points.material as ShaderMaterial).uniforms.uTime.value = performance.now() * .001;
-            // TODO: Move into onOptionChanges
-            (this.points.material as ShaderMaterial).uniforms.uWobbliness.value = this.options.wobbliness;
-            (this.points.material as ShaderMaterial).uniforms.uIntensity.value = this.options.intensity;
-            // TODO: Add phase proxy
-            (this.points.material as ShaderMaterial).uniforms.uPhase.value = this.phase;
+            this.uniforms.uTime.value = performance.now() * .001;
+            this.uniforms.uPhase.value = this.phase;
         }
     }
 
-    private async initGeometry(shape?: BufferGeometry) {
+    private initGeometry(shape?: BufferGeometry) {
         const geometry = new BufferGeometry();
-        await this.setPositions(geometry, shape);
+        this.setPositions(geometry, shape);
         this.setColors(geometry);
         this.setSizes(geometry);
         return geometry;
@@ -141,7 +129,7 @@ export default class PointsWave {
             return [.5 - Math.random(), .5 - Math.random(), .5 - Math.random()];
         };
 
-        for (let i = 0; i < this.options.pointsNumber; i++) {
+        for (let i = 0; i < this.settings.pointsNumber; i++) {
             const offset = i * 3;
             const point = getPoint();
             positions[offset] = point[0];
@@ -154,17 +142,17 @@ export default class PointsWave {
 
     private setSizes(geometry: BufferGeometry) {
         const sizes = [];
-        for (let i = 0; i < this.options.pointsNumber * 3; i++) {
-            sizes.push(Math.random() * this.options.pointSize);
+        for (let i = 0; i < this.settings.pointsNumber * 3; i++) {
+            sizes.push(Math.random() * this.settings.pointSize);
         }
         geometry.setAttribute('size', new Float32BufferAttribute(sizes, 1));
     }
 
     private setColors(geometry: BufferGeometry) {
         const colors = [];
-        const color = [this.options.pointColor.r / 255, this.options.pointColor.g / 255, this.options.pointColor.b / 255];
-        for (let i = 0; i < this.options.pointsNumber; i++) {
-            if (this.options.randomColor) {
+        const color = [this.settings.pointColor.r / 255, this.settings.pointColor.g / 255, this.settings.pointColor.b / 255];
+        for (let i = 0; i < this.settings.pointsNumber; i++) {
+            if (this.settings.randomColor) {
                 colors.push(Math.random(), Math.random(), Math.random());
             } else {
                 colors.push(...color);
@@ -173,14 +161,16 @@ export default class PointsWave {
         geometry.setAttribute('color', new Float32BufferAttribute(colors, 3));
     }
 
+    private uniforms: { [uniform: string]: IUniform };
+
     private initMaterial(): ShaderMaterial {
+       this.uniforms = {
+           uTime: {value: 0},
+           uPhase: {value: 0},
+           uIntensity: {value: this.settings.intensity},
+       };
         return new ShaderMaterial({
-            uniforms: {
-                uTime: {value: 0},
-                uPhase: {value: 0},
-                uWobbliness: {value: this.options.wobbliness},
-                uIntensity: {value: this.options.intensity},
-            },
+            uniforms: this.uniforms,
             glslVersion: GLSL3,
             vertexShader,
             fragmentShader,
@@ -190,15 +180,32 @@ export default class PointsWave {
         });
     }
 
-    private initOptionsProxy(options: PointsWaveOptions): PointsWaveOptions {
-        return new Proxy(options, {
-            get: (target: PointsWaveOptions, prop: keyof PointsWaveOptions, receiver) => {
+    private onSettingsChanges: Map<keyof PointsWaveSettings, () => void> = new Map([
+        ['pointSize', () => this.setSizes(this.points.geometry)],
+        ['pointColor', () => this.setColors(this.points.geometry)],
+        ['randomColor', () => this.setColors(this.points.geometry)],
+        ['pointsNumber', () => {
+            this.setPositions(this.points.geometry);
+            this.setSizes(this.points.geometry);
+            this.setColors(this.points.geometry);
+        }],
+        ['intensity', () => {
+            this.uniforms.uIntensity.value = this.settings.intensity;
+        }],
+        ['shape', async () => {
+            this.setPositions(this.points.geometry, await this.settings.shape.geometry)
+        }],
+    ]);
+
+    private initSettingsProxy(settings: PointsWaveSettings): PointsWaveSettings {
+        return new Proxy(settings, {
+            get: (target: PointsWaveSettings, prop: keyof PointsWaveSettings, receiver) => {
                 return Reflect.get(target, prop, receiver);
             },
-            set: (target: PointsWaveOptions, prop: keyof PointsWaveOptions, receiver) => {
+            set: (target: PointsWaveSettings, prop: keyof PointsWaveSettings, receiver) => {
                 const result = Reflect.set(target, prop, receiver);
-                if (this.onOptionChanges.has(prop)) {
-                    this.onOptionChanges.get(prop)();
+                if (this.onSettingsChanges.has(prop)) {
+                    this.onSettingsChanges.get(prop)();
                 }
                 return result;
             },
