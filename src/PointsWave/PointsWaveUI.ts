@@ -7,6 +7,8 @@ export class PointsWaveUI {
     private tweakpane = new Tweakpane();
 
     public constructor(private pointsWave: PointsWave, private renderer: Renderer) {
+        renderer.domElement.addEventListener('dblclick', () => this.tweakpane.hidden = !this.tweakpane.hidden);
+
         const settingsFolder = this.tweakpane.addFolder({title: 'Настройки', expanded: true});
 
         const geometryFolder = settingsFolder.addFolder({title: 'Геометрия', expanded: true});
@@ -14,7 +16,7 @@ export class PointsWaveUI {
         const geometry = {i: 0, options: geometries};
         const geometryOptions = geometry.options.map((option, i) => ({value: i, text: option.name}));
         let shapeOptions: Array<any> = [];
-            geometryFolder.addInput(geometry, 'i', {label: 'Выбрать', options: geometryOptions})
+        geometryFolder.addInput(geometry, 'i', {label: 'Выбрать', options: geometryOptions})
             .on('change', async (i: number) => {
                 const options = geometry.options[i].options;
                 const setShape = async () => pointsWave.settings.shape = {
@@ -35,7 +37,7 @@ export class PointsWaveUI {
                 }
             });
 
-        settingsFolder.addInput(pointsWave.settings, 'pointsNumber', {label: 'Количество', min: 1e2, max: 1e5});
+        settingsFolder.addInput(pointsWave.settings, 'pointsNumber', {label: 'Количество', min: 1e2, max: 1e5, step: 1});
         settingsFolder.addInput(pointsWave.settings, 'pointSize', {label: 'Размер', min: 1, max: 200});
         settingsFolder.addInput(pointsWave.settings, 'intensity', {label: 'Интенсивность', min: 0, max: 3});
 
@@ -57,7 +59,7 @@ export class PointsWaveUI {
             });
 
         settingsFolder.addInput(pointsWave.settings, 'speed', {label: 'Скорость', min: 0, max: 5});
-        const phaseInput = settingsFolder.addInput(pointsWave, 'phase', {label: 'Фаза', min: 0, max: Math.PI * 2});
+        const phaseInput = settingsFolder.addInput(pointsWave, 'phase', {label: 'Фаза', min: 0, max: Math.PI});
 
         settingsFolder.addButton({title: 'Стоп/Старт'}).on('click', () => {
             if (pointsWave.stepsLeft === 0) {

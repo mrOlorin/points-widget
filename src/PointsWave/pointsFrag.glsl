@@ -7,6 +7,9 @@ in float vSize;
 out vec4 fragColor;
 
 void main() {
-    if (length(gl_PointCoord.xy - .5) > .4 || vSize < 1.) discard;
-    fragColor = vec4(vColor, 1.);
+    vec2 uv = gl_PointCoord - .5;
+    float d = length(uv) * 2.;
+    if (vSize < 1. || d > .5) discard;
+
+    fragColor = vec4(vColor, 1. - d * 2.);
 }

@@ -1,4 +1,4 @@
-import {PCFSoftShadowMap, PerspectiveCamera, Scene, WebGLRenderer} from 'three';
+import {PerspectiveCamera, Scene, WebGLRenderer} from 'three';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import {CSS3DRenderer} from 'three/examples/jsm/renderers/CSS3DRenderer';
 
@@ -76,14 +76,11 @@ export default class Renderer {
         });
         webGLRenderer.setClearColor(0x000000, 0);
         webGLRenderer.setPixelRatio(window.devicePixelRatio);
-        webGLRenderer.shadowMap.enabled = true;
-        webGLRenderer.shadowMap.type = PCFSoftShadowMap;
 
         webGLRenderer.domElement.style.position = 'absolute';
         webGLRenderer.domElement.style.top = '0';
         webGLRenderer.domElement.style.bottom = '0';
         webGLRenderer.domElement.style.left = '0';
-        webGLRenderer.domElement.style.zIndex = '-1';
         return webGLRenderer;
 
     }
@@ -95,7 +92,6 @@ export default class Renderer {
         css3DRenderer.domElement.style.top = '0';
         css3DRenderer.domElement.style.bottom = '0';
         css3DRenderer.domElement.style.left = '0';
-        css3DRenderer.domElement.style.zIndex = '-1';
         return css3DRenderer;
     }
 

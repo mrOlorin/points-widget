@@ -1,7 +1,7 @@
 import {BufferGeometry, Font, Matrix4, ShapeGeometry, TextGeometry, Vector3} from 'three';
 import {SVGLoader} from 'three/examples/jsm/loaders/SVGLoader';
 import {BufferGeometryUtils} from 'three/examples/jsm/utils/BufferGeometryUtils';
-import * as fontJSONData from 'three/examples/fonts/droid/droid_sans_regular.typeface.json';
+import * as fontJSONData from './assets/Roboto_Regular.json';
 
 const loadSVG = async (svgText: string): Promise<BufferGeometry> => {
     const loader = new SVGLoader();
